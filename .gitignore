@@ -76,6 +76,10 @@ Desktop.ini
 logs/
 *.log
 
+# Documentation (local only)
+docs/
+**/docs/
+
 # Docker
 .docker/
 
