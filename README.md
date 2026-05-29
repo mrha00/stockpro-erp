@@ -101,7 +101,7 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/stockpro.git
+git clone https://github.com/mrha00/stockpro-erp.git
 cd stockpro
 
 # 启动所有服务
@@ -255,7 +255,7 @@ npm run test
 
 ## 👨‍💻 作者
 
-Your Name - [your.email@example.com](mailto:your.email@example.com)
+mrha00 - [GitHub](https://github.com/mrha00)
 
 ## 🙏 致谢
 
