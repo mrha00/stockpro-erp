@@ -1,0 +1,6 @@
+{
+  "name": "StockPro ERP",
+  "description": "Enterprise ERP system for inventory management, dashboards, sales tracking, and transaction records.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
