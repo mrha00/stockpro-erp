@@ -2,6 +2,7 @@ using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -32,8 +33,13 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // 配置数据库上下文
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
+
+builder.Services.AddHealthChecks()
+    .AddSqlServer(connectionString, name: "sqlserver", tags: new[] { "db", "ready" });
 
 // 配置服务
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -174,6 +180,15 @@ if (app.Environment.IsDevelopment())
 // 全局异常处理
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    await next();
+});
+
 // HTTPS 重定向
 app.UseHttpsRedirection();
 
@@ -192,6 +207,11 @@ app.UseMiddleware<AuditLogMiddleware>();
 
 // 路由
 app.MapControllers();
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
 
 // 启动时自动迁移数据库（开发环境）
 if (app.Environment.IsDevelopment())
@@ -200,6 +220,12 @@ if (app.Environment.IsDevelopment())
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await dbContext.Database.MigrateAsync();
     Log.Information("Database migrated successfully");
+
+    if (builder.Configuration.GetValue<bool>("SeedData:Enabled"))
+    {
+        var seedLogger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseSeeder");
+        await DatabaseSeeder.SeedAsync(dbContext, seedLogger);
+    }
 }
 
 try

@@ -4,7 +4,9 @@
 *.suo
 *.userosscache
 *.sln.docstates
-*.sql
+
+# SQL backups only (allow seed scripts under InventorySystem/scripts/)
+**/backups/*.sql
 
 # .NET
 bin/
@@ -76,10 +78,6 @@ Desktop.ini
 # Logs
 logs/
 *.log
-
-# Documentation (local only)
-docs/
-**/docs/
 
 # Docker
 .docker/

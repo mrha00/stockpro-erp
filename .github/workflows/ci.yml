@@ -7,7 +7,7 @@ on:
     branches: [main, master]
 
 jobs:
-  build-and-test:
+  backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,12 @@ jobs:
         run: dotnet build InventorySystem/InventorySystem.slnx --no-restore
 
       - name: Test
-        run: dotnet test InventorySystem/InventorySystem.slnx --no-restore --verbosity normal
+        run: dotnet test InventorySystem/InventorySystem.slnx --no-build --verbosity normal
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -33,8 +38,10 @@ jobs:
           cache: npm
           cache-dependency-path: stockpro-erp/package-lock.json
 
-      - name: Frontend typecheck
+      - name: Install, lint, test, build
         working-directory: stockpro-erp
         run: |
           npm ci
           npm run lint
+          npm run test
+          npm run build

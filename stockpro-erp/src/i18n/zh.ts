@@ -25,7 +25,7 @@ export const zh: Record<string, string> = {
   'login.loading': '正在登录验证中...',
   'login.error': '凭证验证失败',
   'login.placeholder.user': '请输入系统账户名',
-  'login.placeholder.pass': '默认: admin/admin123',
+  'login.placeholder.pass': '默认: admin / 123456',
 
   // Dashboard
   'dash.title': '运营总览控制台',

@@ -1,92 +1,69 @@
 # StockPro 进销存管理系统
 
-一个基于 .NET 8 和 React 的全栈企业级进销存管理系统。
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/mrha00/stockpro-erp/actions/workflows/ci.yml/badge.svg)](https://github.com/mrha00/stockpro-erp/actions/workflows/ci.yml)
+
+一个基于 .NET 8 和 React 19 的全栈企业级进销存管理系统，采用 DDD 分层架构，适用于简历展示与技术面试演示。
 
 ## ✨ 项目特性
 
 - 🔐 **JWT 双令牌认证** + RBAC 权限控制
-- 📦 **完整的进销存业务流程**（商品/订单/库存/客户/供应商）
+- 📦 **完整进销存流程**（商品 / 订单 / 库存 / 客户 / 供应商）
 - 🗑️ **软删除 + 审计日志**，支持数据追溯
 - 📊 **实时库存监控**与低库存预警
 - 📈 **销售数据可视化**报表
-- 🌐 **中英文国际化**支持
-- 🐳 **Docker 容器化**部署
-- 🔄 **GitHub Actions CI/CD** 流水线
+- 🌐 **中英文国际化**
+- 🐳 **Docker Compose** 一键启动
+- 🔄 **GitHub Actions** 自动化构建与测试
 
 ## 🏗️ 系统架构
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      前端 (React SPA)                        │
-│  React 19 + TypeScript + Vite + Tailwind CSS                │
-│  Recharts (图表) + Lucide (图标) + i18n (国际化)             │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   后端 (.NET 8 Web API)                      │
-│  ASP.NET Core + EF Core + JWT + Serilog + FluentValidation  │
-│  DDD 四层架构 (Api / Application / Domain / Infrastructure) │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    数据层 (SQL Server)                        │
-│  EF Core Code-First + 软删除 + 审计日志 + 索引优化           │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Frontend["前端 React SPA"]
+        A[React 19 + TypeScript + Vite]
+        B[Tailwind CSS + Recharts + i18n]
+    end
+    subgraph Backend["后端 .NET 8 API"]
+        C[Api 层 - Controllers / Middleware]
+        D[Application 层 - DTOs / Validators]
+        E[Domain 层 - Entities / 业务规则]
+        F[Infrastructure 层 - EF Core / Services]
+    end
+    subgraph Data["数据层"]
+        G[(SQL Server 2022)]
+    end
+    A -->|REST / JWT| C
+    C --> D --> E
+    D --> F --> G
 ```
 
 ## 🛠️ 技术栈
 
-### 后端
-- **.NET 8** - 最新的 LTS 版本
-- **ASP.NET Core Web API** - RESTful API 框架
-- **Entity Framework Core** - ORM 框架
-- **SQL Server 2022** - 关系型数据库
-- **JWT** - 身份认证
-- **Serilog** - 结构化日志
-- **FluentValidation** - 数据验证
-- **BCrypt** - 密码加密
-
-### 前端
-- **React 19** - 用户界面库
-- **TypeScript** - 类型安全
-- **Vite** - 构建工具
-- **Tailwind CSS** - 样式框架
-- **Recharts** - 图表库
-- **Lucide React** - 图标库
-
-### DevOps
-- **Docker** - 容器化
-- **GitHub Actions** - CI/CD
-- **Nginx** - 反向代理
+| 层级 | 技术 |
+|------|------|
+| 后端 | .NET 8、ASP.NET Core、EF Core、JWT、Serilog、FluentValidation、BCrypt |
+| 前端 | React 19、TypeScript、Vite、Tailwind CSS、Recharts |
+| 数据 | SQL Server 2022 |
+| DevOps | Docker、GitHub Actions、Nginx |
 
 ## 📁 项目结构
 
 ```
 .
-├── InventorySystem/          # 后端 .NET API
+├── InventorySystem/              # 后端 DDD 四层
 │   ├── src/
-│   │   ├── InventorySystem.Api/            # API 层
-│   │   ├── InventorySystem.Application/    # 应用层
-│   │   ├── InventorySystem.Domain/         # 领域层
-│   │   └── InventorySystem.Infrastructure/ # 基础设施层
-│   └── tests/
-│       └── InventorySystem.UnitTests/      # 单元测试
-│
-├── stockpro-erp/             # 前端 React 应用
-│   ├── src/
-│   │   ├── api/              # API 客户端
-│   │   ├── components/       # React 组件
-│   │   ├── i18n/             # 国际化
-│   │   └── types.ts          # 类型定义
-│   └── package.json
-│
-└── docs/                     # 项目文档
-    ├── API文档.md
-    ├── 生产上线指南.md
-    ├── 项目代码审查报告.md
-    └── StockPro简历项目完善流程.md
+│   │   ├── InventorySystem.Api/
+│   │   ├── InventorySystem.Application/
+│   │   ├── InventorySystem.Domain/
+│   │   └── InventorySystem.Infrastructure/
+│   ├── tests/InventorySystem.UnitTests/
+│   └── docs/                     # API 文档、上线指南、简历清单等
+├── stockpro-erp/                 # 前端 React 应用
+└── docker-compose.yml
 ```
 
 ## 🚀 快速开始
@@ -95,79 +72,87 @@
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Node.js 20+](https://nodejs.org/)
-- [SQL Server 2022](https://www.microsoft.com/en-us/sql-server) 或 Docker
+- SQL Server 2022 或 Docker
 
 ### 方式一：Docker Compose（推荐）
 
 ```bash
-# 克隆项目
 git clone https://github.com/mrha00/stockpro-erp.git
-cd stockpro
+cd stockpro-erp
 
-# 启动所有服务
 docker-compose up -d
-
-# 访问应用
-# 前端：http://localhost:3000
-# API：http://localhost:5251
 ```
+
+| 服务 | 地址 |
+|------|------|
+| 前端 | http://localhost:3000 |
+| API | http://localhost:5251 |
+| Swagger | http://localhost:5251/swagger（Development） |
+
+首次启动会自动迁移数据库并写入演示种子数据。
 
 ### 方式二：本地开发
 
 ```bash
-# 1. 启动数据库（Docker）
+# 1. 数据库
 docker-compose up sqlserver -d
 
-# 2. 启动后端
+# 2. 复制本地配置（勿提交）
+cp InventorySystem/src/InventorySystem.Api/appsettings.Local.json.example \
+   InventorySystem/src/InventorySystem.Api/appsettings.Local.json
+# 编辑其中的数据库密码与 JWT Secret
+
+# 3. 后端
 cd InventorySystem
 dotnet run --project src/InventorySystem.Api
 
-# 3. 启动前端（新终端）
+# 4. 前端（新终端）
 cd stockpro-erp
 npm install
 npm run dev
 ```
 
-### 默认账号
+开发环境默认 `SeedData:Enabled=true`（见 `appsettings.Development.json`），首次启动写入演示数据。
+
+### 演示账号
 
 | 角色 | 用户名 | 密码 |
 |------|--------|------|
-| 管理员 | admin | admin123 |
-| 测试用户 | test | test123 |
+| 管理员 | admin | 123456 |
+| 采购员 | purchase | 123456 |
+| 销售员 | sale | 123456 |
+| 仓管员 | stock | 123456 |
 
 ## 📚 文档
 
-- [API 接口文档](docs/API文档.md) - 完整的 API 接口说明
-- [生产上线指南](docs/生产上线指南.md) - 部署到生产环境的详细指南
-- [项目代码审查报告](docs/项目代码审查报告.md) - 代码质量分析报告
-- [简历项目完善流程](docs/StockPro简历项目完善流程.md) - 面试准备指南
+- [API 接口文档](InventorySystem/docs/API文档.md)
+- [生产上线指南](InventorySystem/docs/生产上线指南.md)（面试可参考，简历项目不必全量实施）
+- [简历就绪检查清单](InventorySystem/docs/简历就绪检查清单.md)
+- [简历项目完善流程](InventorySystem/docs/StockPro简历项目完善流程.md)
 
 ## 🧪 测试
 
-### 后端测试
-
 ```bash
+# 后端
 cd InventorySystem
 dotnet test
-```
 
-### 前端测试
-
-```bash
+# 前端
 cd stockpro-erp
 npm run test
+npm run build
 ```
 
 ## 🔧 配置说明
 
-### 环境变量
+### 本地敏感配置
 
-创建 `appsettings.Local.json`（不提交到 Git）：
+在 `InventorySystem/src/InventorySystem.Api/` 下创建 `appsettings.Local.json`（已在 `.gitignore` 中忽略）：
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=InventorySystem;User Id=sa;Password=YourPassword"
+    "DefaultConnection": "Server=localhost;Database=InventorySystem;User Id=sa;Password=YourPassword;TrustServerCertificate=True"
   },
   "Jwt": {
     "Secret": "YourSecureJwtSecretKeyMustBeAtLeast32CharactersLong!"
@@ -175,95 +160,35 @@ npm run test
 }
 ```
 
-### CORS 配置
-
-在 `appsettings.json` 中配置允许的前端域名：
+### 种子数据开关
 
 ```json
 {
-  "Cors": {
-    "AllowedOrigins": ["http://localhost:3000"]
+  "SeedData": {
+    "Enabled": true
   }
 }
 ```
 
+仅在需要重新灌入演示数据时开启；生产环境保持 `false`。
+
 ## 📦 核心功能
 
-### 1. 认证授权
-- JWT 双令牌认证（Access Token + Refresh Token）
-- RBAC 角色权限控制（Admin/WarehouseKeeper/Salesman）
-- 密码加密存储（BCrypt）
-
-### 2. 商品管理
-- 商品 CRUD 操作
-- 分类管理
-- 价格管理（成本价/售价）
-- 库存阈值设置
-
-### 3. 订单管理
-- 销售订单/采购订单
-- 订单状态流转（草稿→待审批→处理中→已完成）
-- 自动库存扣减
-
-### 4. 库存管理
-- 入库/出库/盘点
-- 库存冻结/解冻
-- 交易记录追溯
-- 低库存预警
-
-### 5. 客户供应商管理
-- 客户信息管理
-- 供应商信息管理
-- 联系方式管理
-
-### 6. 数据报表
-- 实时仪表盘
-- 销售趋势分析
-- 库存分布统计
-- KPI 指标监控
-
-## 🛡️ 安全特性
-
-- ✅ JWT 令牌认证
-- ✅ RBAC 权限控制
-- ✅ 密码 BCrypt 加密
-- ✅ API 限流防护
-- ✅ CORS 跨域配置
-- ✅ SQL 注入防护（EF Core）
-- ✅ XSS 防护（安全头）
-- ✅ 审计日志记录
-
-## 📈 性能优化
-
-- 数据库索引优化
-- 分页查询
-- 异步编程
-- 响应缓存
-- 静态资源 CDN
-
-## 🤝 贡献指南
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建 Pull Request
+- 认证授权：JWT 双令牌、RBAC、BCrypt
+- 商品 / 分类管理
+- 销售单 / 采购单与状态流转
+- 库存入库、出库、冻结与交易追溯
+- 客户 / 供应商管理
+- 仪表盘 KPI 与图表
 
 ## 📄 许可证
 
-本项目基于 MIT 许可证开源 - 查看 [LICENSE](LICENSE) 文件了解详情
+[MIT License](LICENSE)
 
 ## 👨‍💻 作者
 
-mrha00 - [GitHub](https://github.com/mrha00)
-
-## 🙏 致谢
-
-- [ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/)
-- [React](https://reactjs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
+[mrha00](https://github.com/mrha00)
 
 ---
 
-**⭐ 如果这个项目对你有帮助，请给一个 Star！**
+⭐ 如果这个项目对你有帮助，欢迎 Star！
