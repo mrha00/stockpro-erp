@@ -192,6 +192,10 @@ app.Use(async (context, next) =>
 // HTTPS 重定向
 app.UseHttpsRedirection();
 
+var webRoot = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(Path.Combine(webRoot, "uploads", "avatars"));
+app.UseStaticFiles();
+
 // CORS
 app.UseCors("AllowConfiguredOrigins");
 

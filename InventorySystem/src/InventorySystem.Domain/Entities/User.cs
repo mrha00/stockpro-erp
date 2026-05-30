@@ -28,6 +28,11 @@ public class User : BaseEntity
     public string? RealName { get; set; }
 
     /// <summary>
+    /// 头像 URL（相对路径或外链）
+    /// </summary>
+    public string? AvatarUrl { get; set; }
+
+    /// <summary>
     /// 手机号（加密存储）
     /// </summary>
     public string? Phone { get; set; }

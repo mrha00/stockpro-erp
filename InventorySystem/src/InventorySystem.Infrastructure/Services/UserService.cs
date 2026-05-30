@@ -171,6 +171,7 @@ public class UserService : IUserService
             Username = user.Username,
             Email = user.Email,
             RealName = user.RealName,
+            AvatarUrl = user.AvatarUrl,
             Role = user.Role.ToString(),
             IsActive = user.IsActive,
             CreatedAt = user.CreatedAt

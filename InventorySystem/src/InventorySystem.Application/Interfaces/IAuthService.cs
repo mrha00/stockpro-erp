@@ -27,6 +27,12 @@ public interface IAuthService
     /// </summary>
     Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default);
 
+    Task<UserDto> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task<UserDto> UpdateProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken = default);
+
+    Task<UserDto> UpdateAvatarAsync(Guid userId, string avatarUrl, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// 验证令牌有效性
     /// </summary>

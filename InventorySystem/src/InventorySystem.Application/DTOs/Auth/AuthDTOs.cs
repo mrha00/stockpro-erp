@@ -70,6 +70,15 @@ public class ChangePasswordRequest
 }
 
 /// <summary>
+/// 更新个人资料
+/// </summary>
+public class UpdateProfileRequest
+{
+    public string? RealName { get; set; }
+    public string? Email { get; set; }
+}
+
+/// <summary>
 /// 用户DTO
 /// </summary>
 public class UserDto
@@ -78,6 +87,7 @@ public class UserDto
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? RealName { get; set; }
+    public string? AvatarUrl { get; set; }
     public string Role { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }

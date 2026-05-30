@@ -50,6 +50,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.PasswordHash).HasMaxLength(200);
             entity.Property(e => e.RealName).HasMaxLength(50);
+            entity.Property(e => e.AvatarUrl).HasMaxLength(500);
             entity.Property(e => e.Phone).HasMaxLength(200);
             entity.Property(e => e.RefreshToken).HasMaxLength(500);
         });

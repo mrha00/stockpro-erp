@@ -74,16 +74,7 @@ public class AuthService : IAuthService
             AccessToken = accessToken.Token,
             RefreshToken = refreshToken,
             ExpiresAt = accessToken.ExpiresAt,
-            User = new UserDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                RealName = user.RealName,
-                Role = user.Role.ToString(),
-                IsActive = user.IsActive,
-                CreatedAt = user.CreatedAt
-            }
+            User = MapUserToDto(user)
         };
     }
 
@@ -112,16 +103,7 @@ public class AuthService : IAuthService
             AccessToken = accessToken.Token,
             RefreshToken = newRefreshToken,
             ExpiresAt = accessToken.ExpiresAt,
-            User = new UserDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                RealName = user.RealName,
-                Role = user.Role.ToString(),
-                IsActive = user.IsActive,
-                CreatedAt = user.CreatedAt
-            }
+            User = MapUserToDto(user)
         };
     }
 
@@ -156,6 +138,52 @@ public class AuthService : IAuthService
         await _auditService.LogActionAsync(
             userId, user.Username, "ChangePassword",
             isSuccess: true, cancellationToken: cancellationToken);
+    }
+
+    public async Task<UserDto> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken)
+            ?? throw new NotFoundException("User not found");
+        return MapUserToDto(user);
+    }
+
+    public async Task<UserDto> UpdateProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken)
+            ?? throw new NotFoundException("User not found");
+
+        if (!string.IsNullOrWhiteSpace(request.Email) && request.Email != user.Email)
+        {
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email && u.Id != userId, cancellationToken))
+                throw new ConflictException("Email already in use");
+            user.Email = request.Email;
+        }
+
+        if (request.RealName != null)
+            user.RealName = request.RealName;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await _auditService.LogActionAsync(
+            userId, user.Username, "UpdateProfile",
+            isSuccess: true, cancellationToken: cancellationToken);
+
+        return MapUserToDto(user);
+    }
+
+    public async Task<UserDto> UpdateAvatarAsync(Guid userId, string avatarUrl, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken)
+            ?? throw new NotFoundException("User not found");
+
+        user.AvatarUrl = avatarUrl;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await _auditService.LogActionAsync(
+            userId, user.Username, "UpdateAvatar",
+            isSuccess: true, cancellationToken: cancellationToken);
+
+        return MapUserToDto(user);
     }
 
     public Task<bool> ValidateTokenAsync(string token, CancellationToken cancellationToken = default)
@@ -217,4 +245,16 @@ public class AuthService : IAuthService
         rng.GetBytes(randomNumber);
         return Convert.ToBase64String(randomNumber);
     }
+
+    private static UserDto MapUserToDto(User user) => new()
+    {
+        Id = user.Id,
+        Username = user.Username,
+        Email = user.Email,
+        RealName = user.RealName,
+        AvatarUrl = user.AvatarUrl,
+        Role = user.Role.ToString(),
+        IsActive = user.IsActive,
+        CreatedAt = user.CreatedAt
+    };
 }

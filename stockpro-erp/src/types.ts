@@ -117,6 +117,7 @@ export interface UserDto {
   username: string;
   email: string;
   realName: string | null;
+  avatarUrl?: string | null;
   role: string;
   isActive: boolean;
   createdAt: string;

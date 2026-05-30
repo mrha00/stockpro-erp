@@ -53,3 +53,21 @@ public class ChangePasswordRequestValidator : AbstractValidator<ChangePasswordRe
             .Matches(@"[^a-zA-Z0-9]").WithMessage("NewPassword must contain at least one special character");
     }
 }
+
+/// <summary>
+/// 更新个人资料验证器
+/// </summary>
+public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequest>
+{
+    public UpdateProfileRequestValidator()
+    {
+        RuleFor(x => x.RealName)
+            .MaximumLength(50).WithMessage("RealName cannot exceed 50 characters")
+            .When(x => !string.IsNullOrWhiteSpace(x.RealName));
+
+        RuleFor(x => x.Email)
+            .EmailAddress().WithMessage("Invalid email format")
+            .MaximumLength(100).WithMessage("Email cannot exceed 100 characters")
+            .When(x => !string.IsNullOrWhiteSpace(x.Email));
+    }
+}

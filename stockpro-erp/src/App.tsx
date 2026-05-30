@@ -36,8 +36,10 @@ import ProductManagementView from './components/ProductManagementView';
 import OrderManagementView from './components/OrderManagementView';
 import InventoryView from './components/InventoryView';
 import ContactsView from './components/ContactsView';
+import ProfileSettings from './components/ProfileSettings';
 
 interface ActiveUser {
+  id: string;
   name: string;
   email: string;
   avatarUrl: string;
@@ -158,18 +160,18 @@ export default function App() {
   const handleLoginSuccess = async (username: string, password: string) => {
     try {
       const { user } = await authApi.login(username, password);
-      const activeUser: ActiveUser = {
-        name: user.name,
-        email: user.email,
-        avatarUrl: `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.name}`,
-      };
+      const activeUser = authApi.profileToActiveUser(user);
       setCurrentUser(activeUser);
-      // 持久化用户信息
       localStorage.setItem('stockpro_user', JSON.stringify(activeUser));
       triggerToast(`登录成功！欢迎来到 StockPro ERP 进销存后台，${user.name}。`, 'success');
     } catch (e: any) {
       throw e;
     }
+  };
+
+  const handleUserUpdate = (user: ActiveUser) => {
+    setCurrentUser(user);
+    localStorage.setItem('stockpro_user', JSON.stringify(user));
   };
 
   const handleLogout = async () => {
@@ -477,7 +479,14 @@ export default function App() {
 
           {/* Settings */}
           {activeTab === 'settings' && (
-            <div className="space-y-6" id="settings-frame">
+            <div className="space-y-8" id="settings-frame">
+              <ProfileSettings
+                user={currentUser}
+                onUserUpdate={handleUserUpdate}
+                triggerToast={triggerToast}
+              />
+
+              <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">系统数据维护</h2>
                 <p className="text-xs text-slate-500 mt-1">管理和维护您的企业级 StockPro ERP 云账册，清理系统缓存，以及改变数据渲染选项。</p>
@@ -520,6 +529,7 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+              </div>
               </div>
             </div>
           )}
