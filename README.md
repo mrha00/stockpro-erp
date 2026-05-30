@@ -19,6 +19,12 @@
 - 🐳 **Docker Compose** 一键启动
 - 🔄 **GitHub Actions** 自动化构建与测试
 
+## 📸 界面预览
+
+| 控制台 | 商品管理 | 库存中心 |
+|:------:|:--------:|:--------:|
+| ![控制台](InventorySystem/docs/images/dashboard.png) | ![商品列表](InventorySystem/docs/images/products.png) | ![库存中心](InventorySystem/docs/images/inventory.png) |
+
 ## 🏗️ 系统架构
 
 ```mermaid
