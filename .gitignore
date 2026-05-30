@@ -5,7 +5,8 @@
 *.userosscache
 *.sln.docstates
 
-# SQL backups only (allow seed scripts under InventorySystem/scripts/)
+# SQL scripts (local / demo only, not for repo)
+InventorySystem/sql/
 **/backups/*.sql
 
 # .NET
