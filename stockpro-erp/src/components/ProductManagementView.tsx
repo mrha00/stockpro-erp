@@ -22,7 +22,8 @@ import {
   Loader2
 } from 'lucide-react';
 import { Product } from '../types';
-import { isLowStock } from '../utils/inventory';
+import { isLowStock, getCurrencySymbol, formatCurrency } from '../utils/inventory';
+import { useI18n } from '../i18n/I18nContext';
 
 interface ProductManagementViewProps {
   products: Product[];
@@ -51,6 +52,8 @@ export default function ProductManagementView({
   error,
   onRetry,
 }: ProductManagementViewProps) {
+  const { locale } = useI18n();
+  const currencySymbol = getCurrencySymbol(locale);
   // 1. Core State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -258,7 +261,77 @@ export default function ProductManagementView({
   };
 
   const handleExport = () => {
-    triggerToast('系统已经为您渲染生成了实时导出数据清单（PDF/EXCEL）。请在本地下载。', 'success');
+    try {
+      // 1. 准备表头
+      const headers = [
+        '商品名称',
+        'SKU',
+        '分类',
+        '成本价',
+        '销售价',
+        '库存数量',
+        '可用库存',
+        '冻结库存',
+        '最低库存',
+        '状态',
+        '仓库位置',
+        '最近入库'
+      ];
+
+      // 2. 状态映射
+      const statusMap: Record<string, string> = {
+        'active': '上架中',
+        'draft': '草稿',
+        'inactive': '已下架'
+      };
+
+      // 3. 转换数据行
+      const rows = filteredProducts.map(p => [
+        p.name,
+        p.sku,
+        p.category,
+        formatCurrency(p.cost, locale),
+        formatCurrency(p.price, locale),
+        p.stock.toString(),
+        p.available.toString(),
+        p.frozen.toString(),
+        p.minStock.toString(),
+        statusMap[p.status] || p.status,
+        p.location,
+        p.lastInbound
+      ]);
+
+      // 4. 生成 CSV 内容
+      const escapeCsvCell = (cell: string) => {
+        if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
+          return `"${cell.replace(/"/g, '""')}"`;
+        }
+        return cell;
+      };
+
+      const csvContent = [
+        headers.map(escapeCsvCell).join(','),
+        ...rows.map(row => row.map(escapeCsvCell).join(','))
+      ].join('\n');
+
+      // 5. 创建 Blob 并下载
+      const blob = new Blob(['\ufeff' + csvContent], { 
+        type: 'text/csv;charset=utf-8;' 
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `商品清单_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      triggerToast(`成功导出 ${filteredProducts.length} 条商品记录`, 'success');
+    } catch (error) {
+      console.error('导出失败:', error);
+      triggerToast('导出失败，请稍后重试', 'error');
+    }
   };
 
   return (
@@ -407,15 +480,15 @@ export default function ProductManagementView({
                     className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                   />
                 </th>
-                <th className="py-2 px-4 text-center w-16">首图</th>
-                <th className="py-2 px-4">商品名称与描述</th>
-                <th className="py-2 px-4">货号 / SKU</th>
-                <th className="py-2 px-4">品类</th>
-                <th className="py-2 px-4 text-right">初始成本</th>
-                <th className="py-2 px-4 text-right">对外销售价</th>
-                <th className="py-2 px-4 text-right">总货仓库存</th>
-                <th className="py-2 px-4 text-center">业务状态</th>
-                <th className="py-2 px-4 text-right w-24 pr-6">操作</th>
+                <th className="py-2 px-4 text-center w-16">{locale === 'zh' ? '首图' : 'Image'}</th>
+                <th className="py-2 px-4">{locale === 'zh' ? '商品名称与描述' : 'Product Name'}</th>
+                <th className="py-2 px-4">{locale === 'zh' ? '货号' : 'SKU'}</th>
+                <th className="py-2 px-4">{locale === 'zh' ? '品类' : 'Category'}</th>
+                <th className="py-2 px-4 text-right">{locale === 'zh' ? '初始成本' : 'Cost'} ({currencySymbol})</th>
+                <th className="py-2 px-4 text-right">{locale === 'zh' ? '对外销售价' : 'Price'} ({currencySymbol})</th>
+                <th className="py-2 px-4 text-right">{locale === 'zh' ? '总货仓库存' : 'Stock'}</th>
+                <th className="py-2 px-4 text-center">{locale === 'zh' ? '业务状态' : 'Status'}</th>
+                <th className="py-2 px-4 text-right w-24 pr-6">{locale === 'zh' ? '操作' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="text-xs font-medium text-slate-700 divide-y divide-slate-100">
@@ -466,12 +539,12 @@ export default function ProductManagementView({
 
                       {/* Cost */}
                       <td className="py-3 px-4 text-right font-mono text-slate-500">
-                        ${p.cost.toFixed(2)}
+                        {formatCurrency(p.cost, locale)}
                       </td>
 
                       {/* Sale price */}
                       <td className="py-3 px-4 text-right font-mono text-slate-900 font-semibold">
-                        ${p.price.toFixed(2)}
+                        {formatCurrency(p.price, locale)}
                       </td>
 
                       {/* Stock Level Warning */}
@@ -646,7 +719,7 @@ export default function ProductManagementView({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600">初始成本平均价/ Avg Cost ($) *</label>
+                  <label className="block text-xs font-semibold text-slate-600">{locale === 'zh' ? '初始成本平均价' : 'Avg Cost'} ({currencySymbol}) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -658,7 +731,7 @@ export default function ProductManagementView({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600">销售标价 / Sale Price ($) *</label>
+                  <label className="block text-xs font-semibold text-slate-600">{locale === 'zh' ? '销售标价' : 'Sale Price'} ({currencySymbol}) *</label>
                   <input
                     type="number"
                     step="0.01"

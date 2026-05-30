@@ -21,6 +21,8 @@ import {
   Loader2
 } from 'lucide-react';
 import { Product, Transaction } from '../types';
+import { useI18n } from '../i18n/I18nContext';
+import { getCurrencySymbol, formatCurrency } from '../utils/inventory';
 
 interface InventoryViewProps {
   products: Product[];
@@ -41,6 +43,8 @@ export default function InventoryView({
   error,
   onRetry,
 }: InventoryViewProps) {
+  const { locale } = useI18n();
+  const currencySymbol = getCurrencySymbol(locale);
   // Adjustment Tools Form Panel State
   const [showAdjustmentTool, setShowAdjustmentTool] = useState(false);
   
@@ -307,7 +311,7 @@ export default function InventoryView({
               <div className="h-px bg-slate-100 my-1" />
               <div className="flex justify-between text-[11px] font-bold text-slate-800 leading-none">
                 <span>对应存货资金额:</span>
-                <span className="font-mono">${wh.cost.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                <span className="font-mono">{formatCurrency(wh.cost, locale, { maximumFractionDigits: 0 })}</span>
               </div>
             </div>
           </div>
@@ -317,21 +321,21 @@ export default function InventoryView({
       {/* Detailed Stock placement table section */}
       <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-100 bg-slate-55/4 flex justify-between items-center h-12 leading-none select-none">
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">货位与存量实时监控 / Site spot monitoring</span>
-          <span className="text-[10px] text-slate-400 font-semibold uppercase">Total items: {products.length}</span>
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">{locale === 'zh' ? '货位与存量实时监控' : 'Site spot monitoring'}</span>
+          <span className="text-[10px] text-slate-400 font-semibold uppercase">{locale === 'zh' ? '总货品数' : 'Total items'}: {products.length}</span>
         </div>
 
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-left border-collapse min-w-[750px]">
             <thead>
               <tr className="bg-slate-50/60 border-b border-slate-200 text-slate-500 text-[10px] font-semibold uppercase tracking-wider select-none h-11">
-                <th className="py-2 px-4">货品名 / Product Name</th>
-                <th className="py-2 px-4">类目编号 / Catalog</th>
-                <th className="py-2 px-4">物理仓位 / Target Spot</th>
-                <th className="py-2 px-4 text-right">可售余数 / Available</th>
-                <th className="py-2 px-4 text-right">调拨冻结 / Frozen</th>
-                <th className="py-2 px-4 text-right">物理总库存 / Placed Stock</th>
-                <th className="py-2 px-4 text-center">风险评估 / Status</th>
+                <th className="py-2 px-4">{locale === 'zh' ? '货品名' : 'Product Name'}</th>
+                <th className="py-2 px-4">{locale === 'zh' ? '类目编号' : 'Catalog'}</th>
+                <th className="py-2 px-4">{locale === 'zh' ? '物理仓位' : 'Location'}</th>
+                <th className="py-2 px-4 text-right">{locale === 'zh' ? '可售余数' : 'Available'}</th>
+                <th className="py-2 px-4 text-right">{locale === 'zh' ? '调拨冻结' : 'Frozen'}</th>
+                <th className="py-2 px-4 text-right">{locale === 'zh' ? '物理总库存' : 'Total Stock'}</th>
+                <th className="py-2 px-4 text-center">{locale === 'zh' ? '风险评估' : 'Status'}</th>
               </tr>
             </thead>
             <tbody className="text-xs font-medium text-slate-700 divide-y divide-slate-100">

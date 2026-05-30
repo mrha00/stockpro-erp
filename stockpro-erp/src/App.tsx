@@ -43,9 +43,20 @@ interface ActiveUser {
   avatarUrl: string;
 }
 
+// 从 localStorage 恢复用户状态
+function loadSavedUser(): ActiveUser | null {
+  try {
+    const saved = localStorage.getItem('stockpro_user');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
 export default function App() {
   // --- 1. Authentication State ---
-  const [currentUser, setCurrentUser] = useState<ActiveUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<ActiveUser | null>(loadSavedUser);
 
   // --- 2. Data State ---
   const [products, setProducts] = useState<Product[]>([]);
@@ -147,11 +158,14 @@ export default function App() {
   const handleLoginSuccess = async (username: string, password: string) => {
     try {
       const { user } = await authApi.login(username, password);
-      setCurrentUser({
+      const activeUser: ActiveUser = {
         name: user.name,
         email: user.email,
         avatarUrl: `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.name}`,
-      });
+      };
+      setCurrentUser(activeUser);
+      // 持久化用户信息
+      localStorage.setItem('stockpro_user', JSON.stringify(activeUser));
       triggerToast(`登录成功！欢迎来到 StockPro ERP 进销存后台，${user.name}。`, 'success');
     } catch (e: any) {
       throw e;
@@ -163,6 +177,7 @@ export default function App() {
       await authApi.revokeToken();
     } catch { /* ignore */ }
     clearTokens();
+    localStorage.removeItem('stockpro_user');
     setCurrentUser(null);
     setProducts([]);
     setTransactions([]);

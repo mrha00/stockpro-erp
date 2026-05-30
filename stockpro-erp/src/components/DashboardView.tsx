@@ -30,7 +30,8 @@ import {
   Legend
 } from 'recharts';
 import { Product, Transaction, Order } from '../types';
-import { isLowStock } from '../utils/inventory';
+import { isLowStock, getCurrencySymbol, formatCurrency } from '../utils/inventory';
+import { useI18n } from '../i18n/I18nContext';
 
 interface DashboardViewProps {
   products: Product[];
@@ -47,6 +48,8 @@ export default function DashboardView({
   onNavigateToTab,
   triggerToast
 }: DashboardViewProps) {
+  const { locale } = useI18n();
+  const currencySymbol = getCurrencySymbol(locale);
   const [selectedRange, setSelectedRange] = useState<'all' | 'today' | 'week'>('all');
 
   // 1. Dynamic KPIs calculation
@@ -109,12 +112,12 @@ export default function DashboardView({
     })).filter(item => item.value > 0);
   }, [products]);
 
-  // Format currencies in Chinese notation or absolute dollars
+  // Format currencies in Chinese notation or absolute yuan
   const formatYAxis = (value: number) => {
     if (value >= 1000) {
-      return `$${(value / 1000).toFixed(0)}k`;
+      return `${currencySymbol}${(value / 1000).toFixed(0)}k`;
     }
-    return `$${value}`;
+    return `${currencySymbol}${value}`;
   };
 
   const handleAlertsClick = () => {
@@ -163,7 +166,7 @@ export default function DashboardView({
           </div>
           <div>
             <div className="text-2xl font-bold text-slate-900">
-              ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(totalValue, locale)}
             </div>
             <div className="flex items-center gap-1 mt-1.5 text-emerald-600 font-semibold text-xs">
               <TrendingUp className="w-3.5 h-3.5" />
@@ -182,7 +185,7 @@ export default function DashboardView({
           </div>
           <div>
             <div className="text-2xl font-bold text-slate-900">
-              ${todaySalesValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(todaySalesValue, locale)}
             </div>
             <div className="text-xs text-slate-400 font-medium mt-1.5 flex items-center justify-between">
               <span>{orders.length} 已处理订单</span>
@@ -263,7 +266,7 @@ export default function DashboardView({
                       fontSize: '11px',
                       padding: '8px 12px'
                     }} 
-                    formatter={(value: any) => [`$${value.toLocaleString()}`, '销售总额 ($)']}
+                    formatter={(value: any) => [`${currencySymbol}${value.toLocaleString()}`, `${locale === 'zh' ? '销售总额' : 'Sales'} (${currencySymbol})`]}
                     labelStyle={{ fontWeight: 'bold', color: '#38bdf8', marginBottom: '4px' }}
                   />
                   <Bar dataKey="revenue" fill="#0057c2" radius={[4, 4, 0, 0]} maxBarSize={45} />

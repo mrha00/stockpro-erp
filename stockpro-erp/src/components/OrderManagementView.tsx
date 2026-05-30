@@ -4,16 +4,16 @@
  */
 
 import { useState, useMemo, FormEvent } from 'react';
-import { 
-  Search, 
-  ShoppingCart, 
-  Plus, 
-  Clock, 
-  CheckCircle2, 
-  X, 
-  Calendar, 
-  DollarSign, 
-  TrendingDown, 
+import {
+  Search,
+  ShoppingCart,
+  Plus,
+  Clock,
+  CheckCircle2,
+  X,
+  Calendar,
+  DollarSign,
+  TrendingDown,
   History,
   CheckCircle,
   AlertTriangle,
@@ -21,6 +21,8 @@ import {
   Loader2
 } from 'lucide-react';
 import { Order, Product, Transaction } from '../types';
+import { useI18n } from '../i18n/I18nContext';
+import { getCurrencySymbol, formatCurrency } from '../utils/inventory';
 
 interface OrderManagementViewProps {
   orders: Order[];
@@ -41,6 +43,8 @@ export default function OrderManagementView({
   error,
   onRetry,
 }: OrderManagementViewProps) {
+  const { locale } = useI18n();
+  const currencySymbol = getCurrencySymbol(locale);
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -55,8 +59,8 @@ export default function OrderManagementView({
   // Filtered orders list
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      const matchesSearch = order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            order.id.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.id.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesPayment = paymentFilter ? order.paymentStatus === paymentFilter : true;
       const matchesStatus = statusFilter ? order.orderStatus === statusFilter : true;
       return matchesSearch && matchesPayment && matchesStatus;
@@ -119,7 +123,78 @@ export default function OrderManagementView({
   };
 
   const handleExportOrders = () => {
-    triggerToast('订单交易数据(ORD-X)导出完毕，已自动存储到您的财务归档系统中。', 'success');
+    try {
+      // 1. 准备表头
+      const headers = [
+        '订单号',
+        '日期',
+        '客户名称',
+        '商品明细',
+        '出库数量',
+        '成交总额',
+        '付款状态',
+        '订单状态'
+      ];
+
+      // 2. 状态映射
+      const paymentStatusMap: Record<string, string> = {
+        'paid': '已收全款',
+        'partial': '部分收款',
+        'unpaid': '待收款',
+        'refunded': '已退款'
+      };
+
+      const orderStatusMap: Record<string, string> = {
+        'completed': '已完成',
+        'processing': '处理中',
+        'pending': '待处理',
+        'cancelled': '已取消',
+        'draft': '草稿'
+      };
+
+      // 3. 转换数据行
+      const rows = filteredOrders.map(order => [
+        order.id,
+        order.date,
+        order.customerName,
+        order.items.map(i => `${i.name}(${i.qty}件@${formatCurrency(i.price, locale)})`).join('; '),
+        order.items.reduce((sum, i) => sum + i.qty, 0).toString(),
+        formatCurrency(order.total, locale),
+        paymentStatusMap[order.paymentStatus] || order.paymentStatus,
+        orderStatusMap[order.orderStatus] || order.orderStatus
+      ]);
+
+      // 4. 生成 CSV 内容（处理特殊字符）
+      const escapeCsvCell = (cell: string) => {
+        if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
+          return `"${cell.replace(/"/g, '""')}"`;
+        }
+        return cell;
+      };
+
+      const csvContent = [
+        headers.map(escapeCsvCell).join(','),
+        ...rows.map(row => row.map(escapeCsvCell).join(','))
+      ].join('\n');
+
+      // 5. 创建 Blob 并下载
+      const blob = new Blob(['\ufeff' + csvContent], {
+        type: 'text/csv;charset=utf-8;'
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `交易报表_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      triggerToast(`成功导出 ${filteredOrders.length} 条订单记录`, 'success');
+    } catch (error) {
+      console.error('导出失败:', error);
+      triggerToast('导出失败，请稍后重试', 'error');
+    }
   };
 
   return (
@@ -137,7 +212,7 @@ export default function OrderManagementView({
           {onRetry && <button onClick={onRetry} className="px-3 py-1 text-xs font-semibold bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer">重试</button>}
         </div>
       )}
-      
+
       {/* View Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -154,7 +229,7 @@ export default function OrderManagementView({
             <FileSpreadsheet className="w-4 h-4 mr-1.5 text-slate-400" />
             导出交易报表
           </button>
-          
+
           <button
             onClick={() => {
               if (products.length > 0) {
@@ -173,7 +248,7 @@ export default function OrderManagementView({
 
       {/* Filter and Query section */}
       <div className="bg-white border border-slate-200/80 rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-xs">
-        
+
         {/* Search */}
         <div className="flex-1 min-w-[200px]">
           <label className="block text-xs font-semibold text-slate-500 mb-1.5 select-none">搜索订单编号或客户商户</label>
@@ -230,14 +305,14 @@ export default function OrderManagementView({
           <table className="w-full text-left border-collapse min-w-[850px]" id="orders-grid-table">
             <thead>
               <tr className="bg-slate-50/60 border-b border-slate-200 text-slate-500 text-[10px] font-semibold uppercase tracking-wider select-none h-11">
-                <th className="py-2 px-4 select-none font-mono">订单号 / ERP Order ID</th>
-                <th className="py-2 px-4">建立时间 / Date</th>
-                <th className="py-2 px-4">采购商 / Customer</th>
-                <th className="py-2 px-4">购买商品清单 (Items List)</th>
-                <th className="py-2 px-4 text-right">出库数量</th>
-                <th className="py-2 px-4 text-right">成交总额 ($)</th>
-                <th className="py-2 px-4 text-center">资金到账</th>
-                <th className="py-2 px-4 text-center">发货履约</th>
+                <th className="py-2 px-4 select-none font-mono">{locale === 'zh' ? '订单号' : 'Order ID'}</th>
+                <th className="py-2 px-4">{locale === 'zh' ? '建立时间' : 'Date'}</th>
+                <th className="py-2 px-4">{locale === 'zh' ? '采购商' : 'Customer'}</th>
+                <th className="py-2 px-4">{locale === 'zh' ? '购买商品清单' : 'Items List'}</th>
+                <th className="py-2 px-4 text-right">{locale === 'zh' ? '出库数量' : 'Qty'}</th>
+                <th className="py-2 px-4 text-right">{locale === 'zh' ? '成交总额' : 'Total'} ({currencySymbol})</th>
+                <th className="py-2 px-4 text-center">{locale === 'zh' ? '资金到账' : 'Payment'}</th>
+                <th className="py-2 px-4 text-center">{locale === 'zh' ? '发货履约' : 'Status'}</th>
               </tr>
             </thead>
             <tbody className="text-xs font-medium text-slate-700 divide-y divide-slate-100">
@@ -248,13 +323,13 @@ export default function OrderManagementView({
                       <td className="py-3 px-4 font-mono font-bold text-blue-600">{ord.id}</td>
                       <td className="py-3 px-4 text-slate-400 font-normal">{ord.date}</td>
                       <td className="py-3 px-4 text-slate-900 font-semibold">{ord.customerName}</td>
-                      
+
                       {/* Items loop */}
                       <td className="py-3 px-4">
                         <div className="flex flex-col gap-1">
                           {ord.items.map((it, idx) => (
                             <span key={idx} className="text-slate-800 font-semibold block truncate max-w-[240px]" title={it.name}>
-                              {it.name} <span className="text-slate-400 font-normal">(@ ${it.price.toFixed(2)})</span>
+                              {it.name} <span className="text-slate-400 font-normal">(@ {formatCurrency(it.price, locale)})</span>
                             </span>
                           ))}
                         </div>
@@ -267,35 +342,33 @@ export default function OrderManagementView({
 
                       {/* Total cost */}
                       <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 text-sm">
-                        ${ord.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {formatCurrency(ord.total, locale)}
                       </td>
 
                       {/* Financial paymentStatus tags */}
                       <td className="py-3 px-4 text-center select-none">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                          ord.paymentStatus === 'paid' 
-                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${ord.paymentStatus === 'paid'
+                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                             : ord.paymentStatus === 'partial'
-                            ? 'bg-amber-50 text-amber-600 border-amber-100'
-                            : ord.paymentStatus === 'refunded'
-                            ? 'bg-pink-50 text-pink-600 border-pink-100'
-                            : 'bg-red-50 text-red-600 border-red-100'
-                        }`}>
+                              ? 'bg-amber-50 text-amber-600 border-amber-100'
+                              : ord.paymentStatus === 'refunded'
+                                ? 'bg-pink-50 text-pink-600 border-pink-100'
+                                : 'bg-red-50 text-red-600 border-red-100'
+                          }`}>
                           {ord.paymentStatus === 'paid' ? '已收全款' : ord.paymentStatus === 'partial' ? '收部分预付款' : ord.paymentStatus === 'refunded' ? '已全额退款' : '挂账待核销'}
                         </span>
                       </td>
 
                       {/* Logistics Status tags */}
                       <td className="py-3 px-4 text-center select-none">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                          ord.orderStatus === 'completed' 
-                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${ord.orderStatus === 'completed'
+                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                             : ord.orderStatus === 'processing'
-                            ? 'bg-purple-50 text-purple-600 border-purple-100'
-                            : ord.orderStatus === 'pending'
-                            ? 'bg-amber-50 text-amber-600 border-amber-100'
-                            : 'bg-slate-100 text-slate-500 border-slate-200'
-                        }`}>
+                              ? 'bg-purple-50 text-purple-600 border-purple-100'
+                              : ord.orderStatus === 'pending'
+                                ? 'bg-amber-50 text-amber-600 border-amber-100'
+                                : 'bg-slate-100 text-slate-500 border-slate-200'
+                          }`}>
                           {ord.orderStatus === 'completed' ? '签收完毕' : ord.orderStatus === 'processing' ? '配送中/待妥投' : ord.orderStatus === 'pending' ? '分流待审' : '订单撤单'}
                         </span>
                       </td>
@@ -324,8 +397,8 @@ export default function OrderManagementView({
                 <h3 className="text-sm font-bold text-slate-900">建立出库订单 / Create Sales Order</h3>
                 <p className="text-[10px] text-slate-400 mt-0.5">创建销售合同账单，成功将直接扣减库区可用实物并入账流水</p>
               </div>
-              <button 
-                onClick={() => setIsAddOrderOpen(false)} 
+              <button
+                onClick={() => setIsAddOrderOpen(false)}
                 className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-4.5 h-4.5" />
@@ -333,7 +406,7 @@ export default function OrderManagementView({
             </div>
 
             <form onSubmit={handleCreateOrderSubmit} className="p-5 space-y-4">
-              
+
               {/* Customer input */}
               <div className="space-y-1">
                 <label className="block text-xs font-semibold text-slate-600">往来客户/领用商户 *</label>
@@ -359,7 +432,7 @@ export default function OrderManagementView({
                   <option value="">请挑选发货项目...</option>
                   {products.filter(p => p.status === 'active').map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.name} - ({p.sku}) [余 {p.available}件 | ${p.price}]
+                      {p.name} - ({p.sku}) [余 {p.available}件 | {formatCurrency(p.price, locale)}]
                     </option>
                   ))}
                 </select>
@@ -398,13 +471,13 @@ export default function OrderManagementView({
                 <div className="p-3.5 bg-blue-50/85 border border-blue-100 rounded-lg space-y-1.5 flex flex-col">
                   <div className="flex justify-between text-xs text-blue-800 font-semibold">
                     <span>商品零售价:</span>
-                    <span className="font-mono">${selectedProduct.price.toFixed(2)}</span>
+                    <span className="font-mono">{formatCurrency(selectedProduct.price, locale)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-blue-800 font-semibold">
                     <span>可用余数:</span>
                     <span className="font-mono">{selectedProduct.available} 件</span>
                   </div>
-                  
+
                   {/* Alert if not enough stock */}
                   {selectedProduct.available < orderQty && (
                     <div className="text-[10px] text-amber-700 bg-amber-50 p-1.5 px-2 rounded flex items-center gap-1 font-semibold border border-amber-100">
@@ -414,10 +487,10 @@ export default function OrderManagementView({
                   )}
 
                   <div className="h-px bg-blue-250 my-1" />
-                  
+
                   <div className="flex justify-between items-center text-sm font-bold text-blue-900 leading-none">
                     <span>结算总值:</span>
-                    <span className="font-mono text-base">${calculatedTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-mono text-base">{formatCurrency(calculatedTotal, locale)}</span>
                   </div>
                 </div>
               )}
