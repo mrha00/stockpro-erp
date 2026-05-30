@@ -99,3 +99,6 @@ test-results/
 # User-uploaded avatars (keep folder structure)
 InventorySystem/src/InventorySystem.Api/wwwroot/uploads/avatars/*
 !InventorySystem/src/InventorySystem.Api/wwwroot/uploads/avatars/.gitkeep
+
+# Local screenshot sources (published copies live in InventorySystem/docs/images/)
+Images/
