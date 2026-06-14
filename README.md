@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/mrha00/stockpro-erp/actions/workflows/ci.yml/badge.svg)](https://github.com/mrha00/stockpro-erp/actions/workflows/ci.yml)
 
-一个基于 .NET 8 和 React 19 的全栈企业级进销存管理系统，采用 DDD 分层架构，适用于简历展示与技术面试演示。
+一个基于 .NET 8 和 React 19 的全栈企业级进销存管理系统，采用 DDD 分层架构
 
 ## ✨ 项目特性
 
